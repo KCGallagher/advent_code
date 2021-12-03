@@ -66,7 +66,7 @@ int main()
     MyReadFile.close(); // Close the file
 
     cout << "Final Position: (" << my_pos[0] << ", " << my_pos[1] << ")" << endl;
-    cout << "Prolbem Solution: " << my_pos[0] * my_pos[1] << endl;
+    cout << "Problem Solution: " << my_pos[0] * my_pos[1] << endl;
     return 0;
 }
 
