@@ -1,1 +1,8 @@
 .vscode/
+
+day_*
+!day_*.cpp
+!day_*.txt
+
+!Week_*/day_*.cpp
+!Week_*/day_*.txt
