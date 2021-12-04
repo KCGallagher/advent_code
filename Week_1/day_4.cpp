@@ -42,7 +42,7 @@ int main()
     int tables [5][5][TABLE_NUMBER];
     int bool_tables [5][5][100] = {0};  // Record when each number is called
 
-    ifstream MyReadFile("Week_1/day_4_input_squares.txt"); // Read from the text file
+    ifstream MyReadFile("Week_1/Inputs/day_4_input_squares.txt"); // Read from the text file
     string line; // Create a text string, which is used to output the text file
     int line_number = 1;
 
@@ -65,7 +65,7 @@ int main()
     MyReadFile.close(); // Close the file
 
     // IMPORT ALL BINGO CALLS INTO ONE LONG VECTOR
-    ifstream MyCallFile("Week_1/day_4_input.txt"); // Read from the text file
+    ifstream MyCallFile("Week_1/Inputs/day_4_input.txt"); // Read from the text file
     string call_data; // Create a text string, which is used to output the text file
     vector<int> calls;
 

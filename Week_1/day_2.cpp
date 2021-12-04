@@ -48,7 +48,7 @@ int main()
     std::vector<int> my_pos = {0, 0, 0}; // 2D array in form [depth, x position, aim] to define current position
     bool USE_AIM = true;
 
-    ifstream MyReadFile("Week_1/day_2_input.txt"); // Read from the text file
+    ifstream MyReadFile("Week_1/Inputs/day_2_input.txt"); // Read from the text file
     string line; // Create a text string, which is used to output the text file
 
     // Use a while loop together with the getline() function to read the file line by line

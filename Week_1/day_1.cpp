@@ -40,7 +40,7 @@ int main()
     int DATA_SIZE = 2000;
     int num_array[DATA_SIZE]; // Create array of known size to store numbers read into code
 
-    ifstream MyReadFile("Week_1/day_1_input.txt"); // Read from the text file
+    ifstream MyReadFile("Week_1/Inputs/day_1_input.txt"); // Read from the text file
     string line; // Create a text string, which is used to output the text file
 
     // Use a while loop together with the getline() function to read the file line by line

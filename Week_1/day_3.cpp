@@ -49,7 +49,7 @@ int main()
     int index = 0;
     std::vector<int> total(12, 0); // Running total of binary values
 
-    ifstream MyReadFile("Week_1/day_3_input.txt"); // Read from the text file
+    ifstream MyReadFile("Week_1/Inputs/day_3_input.txt"); // Read from the text file
     string line; // Create a text string, which is used to output the text file
 
     // Use a while loop together with the getline() function to read the file line by line
