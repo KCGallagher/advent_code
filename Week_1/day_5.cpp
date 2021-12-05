@@ -5,34 +5,10 @@
 
 #include <iostream> 
 #include <fstream> 
-#include <vector>
 #include <array>
 #include <string>
-#include <algorithm>  // Use for min, max
-#include <sstream>
 
 using namespace std;
-
-// std::array<std::array<int, 1000>, 1000>  line_writer(int coordinates[4], std::array<std::array<int, 1000>, 1000> vent_array)
-// {
-//     cout << "Start line writer" << endl;
-//     // Vertical line
-//     if (coordinates[0] == coordinates[2]){
-//         cout << "Adding Horizontal Line" << endl;
-//         for (int y = min(coordinates[1], coordinates[3]); y < max(coordinates[1],coordinates[3]) + 1; y++){
-//             vent_array[coordinates[0]][y] = 1;
-//         }
-//     }
-//     // Horizontal line
-//     if (coordinates[1] == coordinates[3]){
-//         cout << "Adding Vertical Line" << endl;
-//         for (int x = min(coordinates[0], coordinates[2]); x < max(coordinates[0], coordinates[2]) + 1; x++){
-//             vent_array[x][coordinates[1]] = 1;
-//         }
-//     }
-//     cout << "Finish line writer" << endl;
-//     return vent_array;
-// }
 
 int intersection_counter(std::array<std::array<int, 1000>, 1000> vent_array){
     int counter = 0;
@@ -71,28 +47,45 @@ int main()
         coordinates[2] = stoi(line.substr(0, line.find(comma)));
         line.erase(0, line.find(comma) + comma.length());
         coordinates[3] = stoi(line);
-        cout << coordinates[0] << " & " << coordinates[1] << " & " << coordinates[2] << " & " << coordinates[3] << endl;
+        // std::cout << coordinates[0] << " & " << coordinates[1] << " & " << coordinates[2] << " & " << coordinates[3] << endl;
 
-        // Ideally these functions would be in a separate function, but get segmentation errors when passing in a big arrauy
+        // Ideally these functions would be in a separate function, but get segmentation errors when passing in a big array
+        // Vertical line
         if (coordinates[0] == coordinates[2]){
-            cout << "Adding Horizontal Line" << endl;
-            for (int y = min(coordinates[1], coordinates[3]); y < max(coordinates[1],coordinates[3]) + 1; y++){
+            for (int y = min(coordinates[1], coordinates[3]); y <= max(coordinates[1],coordinates[3]); y++){
                 vent_array[coordinates[0]][y] += 1;
             }
         }
+
         // Horizontal line
         if (coordinates[1] == coordinates[3]){
-            cout << "Adding Vertical Line" << endl;
-            for (int x = min(coordinates[0], coordinates[2]); x < max(coordinates[0], coordinates[2]) + 1; x++){
+            for (int x = min(coordinates[0], coordinates[2]); x <= max(coordinates[0], coordinates[2]); x++){
                 vent_array[x][coordinates[1]] += 1;
+            }
+        }
+
+        // Diagonal line (y=x)
+        if ((coordinates[3]-coordinates[1]) == (coordinates[2]-coordinates[0])){
+            for (int n = 0; n <= abs(coordinates[3]-coordinates[1]); n++){
+                vent_array[min(coordinates[0], coordinates[2] + n)][min(coordinates[1], coordinates[3]) + n] += 1;
+            }
+        }
+
+        // Diagonal line (y=-x)
+        if ((coordinates[3]-coordinates[1]) == -(coordinates[2]-coordinates[0])){
+            for (int n = 0; n <= abs(coordinates[3]-coordinates[1]); n++){
+                if (coordinates[3] > coordinates[1]){ // x is growing
+                    vent_array[min(coordinates[0], coordinates[2]) + n][max(coordinates[1], coordinates[3]) - n] += 1;
+                }
+                else { // x is shrinking
+                    vent_array[max(coordinates[0], coordinates[2]) - n][min(coordinates[1], coordinates[3]) + n] += 1;
+                }
             }
         }
     }
     MyReadFile.close(); // Close the file
 
-    cout << "Final multi-vent count: " << intersection_counter(vent_array) << endl;
-
-
+    std::cout << "Final multi-vent count: " << intersection_counter(vent_array) << endl;
     return 0;
 }
 
