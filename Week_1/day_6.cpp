@@ -7,6 +7,7 @@
 #include <iostream> 
 #include <fstream> 
 #include <vector>
+#include <numeric>
 #include <string>
 #include <sstream>
 
@@ -14,22 +15,60 @@ using namespace std;
 
 vector<int> evolve_fish(vector<int> fish_ages)
 {
-    for (int n = 0; n < fish_ages.size(); n++){
-        fish_ages[n] += 1;
+    int initial_size = fish_ages.size(); // avoid iterating over new fish
+    for (int n = 0; n < initial_size; n++){
+        if (fish_ages[n] == 0){
+            fish_ages[n] = 6; // Pre-existent fish must wait 7 days before next reproduction cycle
+            fish_ages.push_back(8); // New fish are birthed with 9 day timer before reproduction
+        }
+        else {
+            fish_ages[n] -= 1; // Counter that stores time until next reproduction cycle
+        }
     }
-    fish_ages.push_back(5);
     return fish_ages;
+}
+
+vector<int> evolve_predictor(vector<int> current_pop)
+{
+    vector<int> placeholder_population (9,0);
+    for (int i = 0; i < 9-1; i++){
+        placeholder_population[i] = current_pop[i+1]; 
+        // I.e. current F_8 will be the next F_7, and current F_1 will be next F_0
+    }
+    placeholder_population[6] += current_pop[0]; // For fish restarting reproductive cycle
+    placeholder_population[8] += current_pop[0]; // For new births
+    return placeholder_population;
+}
+
+int population_predictor(vector<int> fish_ages, int day_number)
+{
+    vector<int> current_population (9, 0); 
+    // This is a vector of populations in each state F_n, where F_5 is fish 5 days
+    // from reproduction, and F_0 is fish ready to reproduce
+    // In the form [F_0, F_1, ..., F_7, F_8]
+    for (int n = 0; n < fish_ages.size(); n++){
+        // Put each initial fish into the right population box
+        current_population[fish_ages[n]] += 1;
+    }
+    for (int day = 0; day < day_number; day++){
+        current_population = evolve_predictor(current_population);
+    }
+    // Return sum of elements in array
+    return accumulate(current_population.begin(), current_population.end(), 0);
 }
 
 
 int main()
 {
-    int TOTAL_DAYS = 10; // Total number of days to model
+    int TOTAL_DAYS = 80; // Total number of days to model
+    bool predict_population = true; // For part b, where pop becomes too large to simulate directly
+    bool print_population = false;
+    bool print_day_number = true;
 
     // IMPORT ALL FISH AGES INTO ONE LONG VECTOR
-    ifstream MyReadFile("Week_1/Inputs/day_6_input.txt"); // Read from the text file
+    ifstream MyReadFile("Week_1/Inputs/day_6_input.txt");
     string fish_data; // Create a text string, which is used to output the text file
-    vector<int> fish_ages;
+    vector<int> fish_ages; // Records the number of days until each fish reproduces
 
     while (getline (MyReadFile, fish_data)) {
         stringstream ss(fish_data);
@@ -43,15 +82,29 @@ int main()
     MyReadFile.close(); // Close the file
 
     // EVOLVE FISH POPULATION DAILY
-    for (int day = 0; day < TOTAL_DAYS; day++){
-        fish_ages = evolve_fish(fish_ages);
+    int final_population = 0;
+    if (predict_population){
+        final_population = population_predictor(fish_ages, TOTAL_DAYS);
     }
+    else {
+        for (int day = 0; day < TOTAL_DAYS; day++){
+            if (print_day_number){
+                cout << "Simulating day " << day << "/" << TOTAL_DAYS << endl;
+            }
+            fish_ages = evolve_fish(fish_ages);
+        }
+        final_population = fish_ages.size();
+    }
+    
 
     // OUTPUT FINAL RESULT
-    for (int n = 0; n < fish_ages.size(); n++){
-        cout << fish_ages[n] << ", ";
+    if (print_population){
+        for (int n = 0; n < fish_ages.size(); n++){
+            cout << fish_ages[n] << ", ";
+        }
     }
-    std::cout << "Final number of fish is: " << fish_ages.size() << endl;
+    
+    std::cout << "\n Final number of fish after " << TOTAL_DAYS << " days is: " << final_population << endl;
 
     return 0;
 }
