@@ -28,9 +28,9 @@ vector<int> evolve_fish(vector<int> fish_ages)
     return fish_ages;
 }
 
-vector<int> evolve_predictor(vector<int> current_pop)
+vector<long long> evolve_predictor(vector<long long> current_pop)
 {
-    vector<int> placeholder_population (9,0);
+    vector<long long> placeholder_population (9,0);
     for (int i = 0; i < 9-1; i++){
         placeholder_population[i] = current_pop[i+1]; 
         // I.e. current F_8 will be the next F_7, and current F_1 will be next F_0
@@ -40,9 +40,9 @@ vector<int> evolve_predictor(vector<int> current_pop)
     return placeholder_population;
 }
 
-int population_predictor(vector<int> fish_ages, int day_number)
+long long population_predictor(vector<int> fish_ages, int day_number)
 {
-    vector<int> current_population (9, 0); 
+    vector<long long> current_population (9, 0); 
     // This is a vector of populations in each state F_n, where F_5 is fish 5 days
     // from reproduction, and F_0 is fish ready to reproduce
     // In the form [F_0, F_1, ..., F_7, F_8]
@@ -53,14 +53,19 @@ int population_predictor(vector<int> fish_ages, int day_number)
     for (int day = 0; day < day_number; day++){
         current_population = evolve_predictor(current_population);
     }
-    // Return sum of elements in array
-    return accumulate(current_population.begin(), current_population.end(), 0);
+
+    // Return sum of elements in array - loop is more stable than accumulate()
+    long long sum_of_elements = 0;
+    for (int i = 0; i < 9; i++){
+        sum_of_elements += current_population[i];
+    }
+    return sum_of_elements;
 }
 
 
 int main()
 {
-    int TOTAL_DAYS = 80; // Total number of days to model
+    int TOTAL_DAYS = 256; // Total number of days to model
     bool predict_population = true; // For part b, where pop becomes too large to simulate directly
     bool print_population = false;
     bool print_day_number = true;
@@ -82,7 +87,7 @@ int main()
     MyReadFile.close(); // Close the file
 
     // EVOLVE FISH POPULATION DAILY
-    int final_population = 0;
+    long long final_population = 0;
     if (predict_population){
         final_population = population_predictor(fish_ages, TOTAL_DAYS);
     }
