@@ -1,7 +1,8 @@
 /* 
  * Takes an input txt files with lines of various bracket characters
  * Identifies mismatching bracket pairs, and reocrds them according to a scoring system
- * Returns the total score from all mismatched bracket pairs
+ * Returns the total score from all mismatched bracket pairs.
+ * Also identifies any incomplete bracket pairs, and returns score based on these too
  */
 
 #include <iostream> 
@@ -16,7 +17,6 @@ void print_vector(vector<string> data)
 {
     for (int i = 0; i < data.size(); i++){
         cout << "Line " << i << " = " << data[i] << " of length " << data[i].size() << endl;
-
     }
 }
 
@@ -29,15 +29,16 @@ void print_open_clusters(vector<char> data)
     cout << data[data.size() - 1] << endl;
 }
 
-int corrupt_syntax(string data)
+std::pair<int, long long> syntax_scores(string data)
 {
-    int line_error = 0; 
+    int corrupt_error = 0; 
+    long long incomplete_error = 0; 
     
     vector<char> opening_brackets = {'(', '{', '[', '<'}; 
     vector<char> closing_brackets = {')', '}', ']', '>'}; 
-    vector<int> cluster_number = {0}; // number of open clusters for each bracket, same order as above
     vector<char> open_clusters = {}; // records all open clusters 
-    vector<int> bracket_penalties= {3, 1197, 57, 25137}; // Penalty scores for each corrupt bracket, same order as above
+    vector<int> corrupt_penalties = {3, 1197, 57, 25137}; // Penalty scores for each corrupt bracket, same order as above
+    vector<int> incomplete_penalties= {1, 3, 2, 4}; // Penalty scores for each incomplete bracket, same order as above
 
     for (int n = 0; n < data.size(); n++){
         char bracket = data[n];
@@ -58,44 +59,56 @@ int corrupt_syntax(string data)
             else { // invalid closer
                 // print_open_clusters(open_clusters);
                 // cout << "Next bracket: " << closing_brackets[index_closer] << ", so indices: "  << index_closer << " & " << index_last_opener << endl;
-                line_error += bracket_penalties[index_closer];
+                corrupt_error += corrupt_penalties[index_closer];
                 break;
             }
         } else {
            throw std::invalid_argument("Unknown character found");
         }
     }
-    return line_error;
+    // At this point, open_clusters contains all brackets that have no closing pair.
+    if (corrupt_error == 0){
+        for (int n = open_clusters.size() - 1; n >= 0; n--){  // Iterate through open clusters backwards
+        auto iterator = find(opening_brackets.begin(), opening_brackets.end(), open_clusters[n]);
+        int index = iterator - opening_brackets.begin();
+        incomplete_error *= 5; // Pointless step to make scoring more complicated
+        incomplete_error += incomplete_penalties[index];
+        }
+    }
+    return std::make_pair(corrupt_error, incomplete_error);
 }
-
-
 
 
 int main()
 {
-    int error_score = 0;  // Total syntax error score
+    int corrupt_score = 0;  // Total corrupt syntax score
+    vector<long long> incomplete_scores;  // Total incomplete syntax score
 
-    // IMPORT ALL HEIGHT VALUES INTO ONE ARRAY
     vector<string> bracket_lines; // Record each string of brackets into an array
-
     ifstream MyReadFile("Week_2/Inputs/day_10_input.txt"); 
     string line; 
-    int line_num = 0;
-
 
     while (getline (MyReadFile, line)) {
         bracket_lines.push_back(line);
     }
-    MyReadFile.close(); // Close the file
+    MyReadFile.close(); 
 
-    print_vector(bracket_lines);
+    // print_vector(bracket_lines);  // Used to check all bracket lines have been imported correctly
 
     for (int n = 0; n < bracket_lines.size(); n++){
-        int line_score = corrupt_syntax(bracket_lines[n]); // defined for printing
-        error_score += line_score;
-        cout << "Line " << n << " has penalty score " << line_score << endl;
+        pair<int, int> line_scores = syntax_scores(bracket_lines[n]); 
+        corrupt_score += line_scores.first;
+        if (line_scores.second > 0){  // Only record none zero scores (i.e. dont record 0 for corrupt lines)
+            incomplete_scores.push_back(line_scores.second); 
+            // cout << "    Line " << n << " has penalty score " << line_scores.second << endl;
+        }
     }
 
-    std::cout << "Total syntax error score: " << error_score << endl;
+    // Find median incomplete score to output
+    size_t median_index = (incomplete_scores.size() - 1) / 2;
+    std::sort(incomplete_scores.begin(), incomplete_scores.end());
+
+    std::cout << "Total corrupt syntax score: " << corrupt_score << endl;
+    std::cout << "Median incomplete syntax score: " << incomplete_scores[median_index] << endl;
     return 0;
 }
