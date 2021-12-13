@@ -15,8 +15,8 @@
 using namespace std;
 
 // Define recursive functions for later
-int count_paths(string, set<string>, bool, map<string, set<string>>);
-int sum_paths(string, set<string>, bool, map<string, set<string>>);
+int count_paths(string, set<string>, bool, map<string, set<string>>&);
+int sum_paths(string, set<string>, bool, map<string, set<string>>&);
 
 bool minor_region(string region_code)
 {
@@ -39,7 +39,7 @@ void print_map(map<string, set<string>> data, string name)
     }
 }
 
-int count_paths(string room, set<string> small_visited, bool revisit, map<string, set<string>> cave)
+int count_paths(string room, set<string> small_visited, bool revisit, map<string, set<string>>& cave)
 {
     set<string> visited = small_visited;
     if(room == "end"){
@@ -60,7 +60,7 @@ int count_paths(string room, set<string> small_visited, bool revisit, map<string
     return sum_paths(room, visited, revisit, cave);
 }
 
-int sum_paths(string room, set<string> visited, bool revisit, map<string, set<string>> cave)
+int sum_paths(string room, set<string> visited, bool revisit, map<string, set<string>>& cave)
 {
     int summed_paths = 0;
     for(auto neighbour : cave[room]) {
