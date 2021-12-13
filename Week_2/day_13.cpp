@@ -1,9 +1,8 @@
 /* 
- * Takes an input txt files with connections between different regions
- * Major regions are denotes with uppercase, and minor with lowercase
- * Records the number of route that pass from start to end
- * This done without passing through any minor regions multiple times,
- * and also considering routes that cross one minor region twice
+ * Takes a list of coordinates and a list of folds on a given axis
+ * Plots coordinates on a grid, and then applies given folds to grid
+ * Records total number of points on grid (which decreases as points overlap_)
+ * Also displays the dot array - in this case it gives a message!
  */
 
 #include <iostream> 
@@ -41,6 +40,8 @@ vector<vector<int>> make_dots_array(vector<pair<int, int>> coords){
 }
 
 vector<vector<int>> fold_dots_array(vector<vector<int>> dots, pair<char, int> fold){
+    // Folds input array on a given fold, returns (smaller) output array
+
     vector<vector<int>> output;
     if (fold.first == 'x'){
         assert (2 * fold.second + 1 == dots[0].size()); // so fold is halfway across array
@@ -52,8 +53,8 @@ vector<vector<int>> fold_dots_array(vector<vector<int>> dots, pair<char, int> fo
             output.push_back(row_vector);
         }
     } else if(fold.first == 'y'){
-        assert (2 * fold.second + 1 == dots.size()); // so fold is halfway across array
-        for (int i = 0; i < fold.second; i++){ //iterate over rows
+        assert (2 * fold.second + 1 == dots.size()); 
+        for (int i = 0; i < fold.second; i++){ 
             vector<int> row_vector;
             for (int j = 0; j < dots[0].size(); j++){
                 row_vector.push_back(dots[i][j] || dots[2 * fold.second - i][j]);
@@ -80,7 +81,7 @@ int count_dots(vector< vector<int> > data)
 char print_dot(int dot)
 {
     if(dot){
-        return '#';
+        return '#';  // Used instead of a dot as a dense character for visualisation
     } else{
         return ' ';
     }
@@ -103,13 +104,11 @@ void print_dots_array(vector< vector<int> > data)
 
 int main()
 {
-    // GENERATE MAP OF LINKED CAVES FOR EACH CAVE
-    int total_paths = 0;
     vector<pair<int, int>> coords;
     vector<pair<char, int>> folds;
 
-    ifstream MyReadFile("Week_2/Inputs/day_13_input.txt"); // Read from the text file
-    string line; // Create a text string, which is used to output the text file
+    ifstream MyReadFile("Week_2/Inputs/day_13_input.txt"); 
+    string line; 
     int line_number = 1;
 
     string delimiter = ",";
@@ -127,7 +126,7 @@ int main()
         } else {
             pair<char,int> line_fold;
             int equals_index = line.find("=");
-            line_fold.first = line[equals_index - 1];  //  For character before equals
+            line_fold.first = line[equals_index - 1];  //  For the character before equals
             line_fold.second = stoi(line.substr(equals_index + 1, equals_index + 2));
             folds.push_back(line_fold);
         }
@@ -136,7 +135,7 @@ int main()
 
     vector<vector<int>> dots = make_dots_array(coords);
     int initial_dots = count_dots(dots);
-    int first_fold_dots = count_dots(fold_dots_array(dots, folds[0]));
+    int first_fold_dots = count_dots(fold_dots_array(dots, folds[0])); // For part a
 
     for (int n = 0; n < folds.size(); n++){
         vector<vector<int>> old_dots = dots;
@@ -148,7 +147,7 @@ int main()
     cout << "Number of dots after first fold: " << first_fold_dots << endl;
     cout << "Number of dots after final fold: " << final_fold_dots << endl;
 
-    print_dots_array(dots);
+    print_dots_array(dots);  // For part b
     return 0;
 }
 
