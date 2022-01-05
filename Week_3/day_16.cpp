@@ -1,13 +1,19 @@
 /* 
  * Takes an hexadecimal string and converts it to a binary string
- * Unpacks the package version numbers from the operator packet
- * Returns the sum of version numbers
+ * Unpacks the package version numbers from the operator packet and returns sum
+ * Operates on all literal values as er predefined rules to give final value
+ * 
+ * Note that this file has structured bindings which requires c++17
  */
 
 #include <iostream> 
 #include <fstream> 
 #include <string>
 #include <bitset>
+#include <tuple> 
+#include <vector>
+#include <algorithm>
+#include <numeric>
 
 
 using namespace std;
@@ -25,7 +31,7 @@ string hd_to_bin(string hd_string)
 }
 
 
-pair<int, string> literal_value(string data)
+tuple<string, long long> literal_value(string data)
 {
     int group_start = 6;
     string string_value = "";
@@ -37,65 +43,92 @@ pair<int, string> literal_value(string data)
         }
         group_start += 5;  // Jump to next group
     }
-    // SIDE EFFECT - removes current packet from string
-    // This might not be good practice, but it is easiest to do here
     data = data.substr(group_start + 5);
 
-    int total_value = stol(string_value, 0, 2);
-    cout << "      Literal Value: " << total_value << endl;
-    return make_pair(total_value, data);
+    long long total_value = stoll(string_value, 0, 2);
+    return make_tuple(data, total_value);
 }
 
-pair<int, string> count_version(string data)
+long long packet_value(vector<long long> values, int type_id)
 {
+    if (type_id == 0){  // Sum
+        return std::accumulate(values.begin(), values.end(), 0);
+    } else if (type_id == 1){  // Product
+        long long product = 1;
+        for (auto& n : values)
+            product *= n;
+        return product;
+    } else if (type_id == 2){  // Minimum
+        return *min_element(values.begin(), values.end());
+    } else if (type_id == 3){  // Maximum
+        return *max_element(values.begin(), values.end());
+    } else if (type_id == 5){  // Greater than
+        return int(values[0] > values[1]);
+    } else if (type_id == 6){  // Less than
+        return int(values[0] < values[1]);
+    } else if (type_id == 7){  // Equal to
+        return int(values[0] == values[1]);
+    } else {
+        throw invalid_argument("Unrecognised Type_ID");
+    }
+}
+
+tuple <string, int, long long> open_package(string data)
+{
+    long long value = 0;
     int version_num = stoi(data.substr(0, 3), 0, 2);
     if(data.substr(3, 3) == "100"){  // For Literal Value Packet
-        cout << "   Lit Value Packet: " << version_num << endl;
-        pair<int, string> output = literal_value(data);
-        int lit_value = output.first;
-        data = output.second;  // Wanted to use structured bindings but wouldn't compile
+        auto [new_data, new_value] = literal_value(data);
+        data = new_data;
+        value = new_value;
     } 
     else {  // Operator packet
         if(data[6] == '0'){  // 15 bits give length of subpackages
-            cout << "   Operator Packet (0) " << version_num << endl;
             int len = stoi(data.substr(7, 15), 0, 2);
             string sub_data = data.substr(7 + 15, len);
+            vector<long long> values;
             while (sub_data.length()){  // Iterate through sub packages
-                pair<int, string> output = count_version(sub_data);
-                version_num += output.first;
-                sub_data = output.second;
+                auto [new_data, version, new_value] = open_package(sub_data);
+                sub_data = new_data;
+                version_num += version;
+                values.push_back(new_value);
             }
+            value = packet_value(values, stoi(data.substr(3, 3), 0, 2));
             data = data.substr(7 + 15 + len);  // Remove all packages considered above
 
         } else {  // 11 bits give number of subpackages
-            cout << "   Operator Packet (1): " << version_num << endl;
             int num = stoi(data.substr(7, 11), 0, 2);
             string sub_data = data.substr(7 + 11);
+            vector<long long> values;
             for (int n = 0; n < num; n++){  // Iterate through sub packages
-                pair<int, string> output = count_version(sub_data);
-                version_num += output.first;
-                sub_data = output.second;
+                auto [new_data, version, new_value] = open_package(sub_data);
+                sub_data = new_data;
+                version_num += version;
+                values.push_back(new_value);
             }
+            value = packet_value(values, stoi(data.substr(3, 3), 0, 2));
             data = sub_data;
         }
     }
-    return make_pair(version_num, data);  
+    return make_tuple(data, version_num, value);  
 }
 
-int count_versions(string data, int version_count)
+pair<int, long long> open_packages(string data, int version_count)
 {
+    long long value = 0;
     while (data.length()){  // Stop when data is empty
         if (data.length() < 10){  // Avoid checking very large numbers
-            if (stol(data, 0, 2) == 0){
+            if (stoi(data, 0, 2) == 0){
                 break;  // Stop when you reach the padding zeroes
             }
         }
         
-        pair<int, string> output = count_version(data);
-        version_count += output.first;
-        data = output.second;  // Wanted to use structured bindings but wouldn't compile
+        auto [new_data, version, new_value] = open_package(data);
+        data = new_data;
+        version_count += version;
+        value = new_value;
     }
-    return version_count;
+    return make_pair(version_count, value);
 }
 
 
@@ -113,12 +146,13 @@ int main()
     string bin_data = hd_to_bin(hd_data);  // Convert to binary form
 
     int version_count = 0;
-    int score = count_versions(bin_data, version_count);
+    pair<int, long long> scores = open_packages(bin_data, version_count);
  
     // std::cout << hd_data << endl;
     // std::cout << bin_data << endl;
 
-    cout << "Cumulative version number of packages: " << score << endl;
+    cout << "Cumulative version number of packages: " << scores.first << endl;
+    cout << "Final score of packages: " << scores.second << endl;
 
     return 0;
 }
